@@ -113,7 +113,7 @@ src/main/java/com/faith/wallet_service/
 ├── controller/
 │   ├── WalletController.java
 │   └── TransactionController.java
-├── dto/                         # TransactionRequest, TransferRequest, TransactionResponse, TransferResponse
+├── dto/                         # CreateWalletRequest, TransactionRequest, TransferRequest, TransactionResponse, TransferResponse
 ├── entity/                      # Wallet, WalletTransaction, TransferTransaction, TransactionIdempotencyResponse, TransferIdempotencyResponse
 ├── entity/                      # Wallet, WalletTransaction
 ├── enums/                       # TransactionType (CREDIT, DEBIT)
