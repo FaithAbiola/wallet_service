@@ -1,5 +1,6 @@
 package com.faith.wallet_service.controller;
 
+import com.faith.wallet_service.commons.ResultWrapper;
 import com.faith.wallet_service.dto.CreateWalletRequest;
 import com.faith.wallet_service.entity.Wallet;
 import com.faith.wallet_service.service.WalletService;
@@ -30,9 +31,13 @@ public class WalletController {
         @ApiResponse(responseCode = "400", description = "Invalid request data"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Wallet> createWallet(@Valid @RequestBody CreateWalletRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(walletService.createWallet(request));
+    public ResponseEntity<ResultWrapper<Wallet>> createWallet(@Valid @RequestBody CreateWalletRequest request) {
+        Wallet wallet = walletService.createWallet(request);
+        ResultWrapper<Wallet> result = new ResultWrapper<>();
+        result.setStatus(ResultWrapper.ResultStatus.SUCCESS);
+        result.setMessage("Wallet created successfully");
+        result.setData(wallet);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("/{id}")
@@ -41,7 +46,12 @@ public class WalletController {
         @ApiResponse(responseCode = "200", description = "Wallet found"),
         @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<Wallet> getWallet(@PathVariable Long id) {
-        return ResponseEntity.ok(walletService.getWallet(id));
+    public ResponseEntity<ResultWrapper<Wallet>> getWallet(@PathVariable Long id) {
+        Wallet wallet = walletService.getWallet(id);
+        ResultWrapper<Wallet> result = new ResultWrapper<>();
+        result.setStatus(ResultWrapper.ResultStatus.SUCCESS);
+        result.setMessage("Wallet retrieved successfully");
+        result.setData(wallet);
+        return ResponseEntity.ok(result);
     }
 }

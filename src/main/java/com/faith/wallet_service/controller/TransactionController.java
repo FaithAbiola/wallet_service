@@ -1,5 +1,6 @@
 package com.faith.wallet_service.controller;
 
+import com.faith.wallet_service.commons.ResultWrapper;
 import com.faith.wallet_service.dto.TransactionRequest;
 import com.faith.wallet_service.dto.TransactionResponse;
 import com.faith.wallet_service.dto.TransferRequest;
@@ -31,8 +32,13 @@ public class TransactionController {
         @ApiResponse(responseCode = "400", description = "Invalid request or insufficient balance"),
         @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<TransactionResponse> transact(@Valid @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(transactionService.applyTransaction(request));
+    public ResponseEntity<ResultWrapper<TransactionResponse>> transact(@Valid @RequestBody TransactionRequest request) {
+        TransactionResponse response = transactionService.applyTransaction(request);
+        ResultWrapper<TransactionResponse> result = new ResultWrapper<>();
+        result.setStatus(ResultWrapper.ResultStatus.SUCCESS);
+        result.setMessage("Transaction completed successfully");
+        result.setData(response);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/transfer")
@@ -42,7 +48,12 @@ public class TransactionController {
         @ApiResponse(responseCode = "400", description = "Invalid request or insufficient balance"),
         @ApiResponse(responseCode = "404", description = "Sender or receiver wallet not found")
     })
-    public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
-        return ResponseEntity.ok(transactionService.transfer(request));
+    public ResponseEntity<ResultWrapper<TransferResponse>> transfer(@Valid @RequestBody TransferRequest request) {
+        TransferResponse response = transactionService.transfer(request);
+        ResultWrapper<TransferResponse> result = new ResultWrapper<>();
+        result.setStatus(ResultWrapper.ResultStatus.SUCCESS);
+        result.setMessage("Transfer completed successfully");
+        result.setData(response);
+        return ResponseEntity.ok(result);
     }
 }

@@ -34,7 +34,7 @@ class WalletApiIntegrationTest {
 
     private String extractId(MvcResult createResult) throws Exception {
         JsonNode root = objectMapper.readTree(createResult.getResponse().getContentAsString());
-        return root.get("id").asText();
+        return root.path("data").path("id").asText();
     }
 
     @Test
@@ -45,12 +45,14 @@ class WalletApiIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.balance").value(100))
-                .andExpect(jsonPath("$.description").value("Test wallet"))
-                .andExpect(jsonPath("$.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("Wallet created successfully"))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.balance").value(100))
+                .andExpect(jsonPath("$.data.description").value("Test wallet"))
+                .andExpect(jsonPath("$.data.createdAt").isNotEmpty())
                 .andReturn();
-        String id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        String id = objectMapper.readTree(result.getResponse().getContentAsString()).path("data").path("id").asText();
         assertThat(id).isNotBlank();
     }
 
@@ -67,8 +69,10 @@ class WalletApiIntegrationTest {
 
         mockMvc.perform(get("/wallets/" + walletId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(Long.parseLong(walletId)))
-                .andExpect(jsonPath("$.balance").value(50));
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("Wallet retrieved successfully"))
+                .andExpect(jsonPath("$.data.id").value(Long.parseLong(walletId)))
+                .andExpect(jsonPath("$.data.balance").value(50));
     }
 
     @Test
@@ -82,21 +86,23 @@ class WalletApiIntegrationTest {
                 .andReturn();
         String walletId = extractId(create);
 
-        String body = "{\"walletId\":" + walletId + ",\"amount\":200,\"type\":\"CREDIT\",\"idempotencyKey\":\"test-credit-1\"}";
+        String body = "{\"walletId\":" + walletId + ",\"amount\":200,\"type\":\"CREDIT\",\"idempotencyKey\":\"1f6e3a2b-9c7d-4f1a-8e5b-3a2d4f9c0e12\"}";
 
         // First request
         MvcResult firstResponse = mockMvc.perform(post("/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.transactionId").isNotEmpty())
-                .andExpect(jsonPath("$.walletId").value(Long.parseLong(walletId)))
-                .andExpect(jsonPath("$.balance").value(300))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("Transaction completed successfully"))
+                .andExpect(jsonPath("$.data.transactionId").isNotEmpty())
+                .andExpect(jsonPath("$.data.walletId").value(Long.parseLong(walletId)))
+                .andExpect(jsonPath("$.data.balance").value(300))
+                .andExpect(jsonPath("$.data.timestamp").isNotEmpty())
                 .andReturn();
 
         String firstResponseBody = firstResponse.getResponse().getContentAsString();
 
         mockMvc.perform(get("/wallets/" + walletId))
-                .andExpect(jsonPath("$.balance").value(300));
+                .andExpect(jsonPath("$.data.balance").value(300));
 
         // Second request with same idempotency key should return cached response
         MvcResult secondResponse = mockMvc.perform(post("/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -110,7 +116,7 @@ class WalletApiIntegrationTest {
 
         // Balance should still be 300 (no double application)
         mockMvc.perform(get("/wallets/" + walletId))
-                .andExpect(jsonPath("$.balance").value(300));
+                .andExpect(jsonPath("$.data.balance").value(300));
     }
 
     @Test
@@ -124,12 +130,14 @@ class WalletApiIntegrationTest {
                 .andReturn();
         String walletId = extractId(create);
 
-        String body = "{\"walletId\":" + walletId + ",\"amount\":20,\"type\":\"DEBIT\",\"idempotencyKey\":\"debit-over-1\"}";
+        String body = "{\"walletId\":" + walletId + ",\"amount\":20,\"type\":\"DEBIT\",\"idempotencyKey\":\"7b2c4f8a-6d3e-4b5f-9a7e-1d2c3b4f5a6e\"}";
         mockMvc.perform(post("/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.message").value("Insufficient balance"));
 
         mockMvc.perform(get("/wallets/" + walletId))
-                .andExpect(jsonPath("$.balance").value(10));
+                .andExpect(jsonPath("$.data.balance").value(10));
     }
 
     @Test
@@ -148,25 +156,27 @@ class WalletApiIntegrationTest {
         String walletAId = extractId(a);
         String walletBId = extractId(b);
 
-        String transferBody = "{\"fromWalletId\":" + walletAId + ",\"toWalletId\":" + walletBId + ",\"amount\":40,\"idempotencyKey\":\"transfer-test-1\"}";
+        String transferBody = "{\"fromWalletId\":" + walletAId + ",\"toWalletId\":" + walletBId + ",\"amount\":40,\"idempotencyKey\":\"3e9f1b4c-8d2a-4c7f-9b5d-2f1a6c3e7b8d\"}";
         mockMvc.perform(post("/transactions/transfer").contentType(MediaType.APPLICATION_JSON).content(transferBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.transferId").isNotEmpty())
-                .andExpect(jsonPath("$.fromWalletId").value(Long.parseLong(walletAId)))
-                .andExpect(jsonPath("$.fromBalance").value(60))
-                .andExpect(jsonPath("$.toWalletId").value(Long.parseLong(walletBId)))
-                .andExpect(jsonPath("$.toBalance").value(40))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("Transfer completed successfully"))
+                .andExpect(jsonPath("$.data.transferId").isNotEmpty())
+                .andExpect(jsonPath("$.data.fromWalletId").value(Long.parseLong(walletAId)))
+                .andExpect(jsonPath("$.data.fromBalance").value(60))
+                .andExpect(jsonPath("$.data.toWalletId").value(Long.parseLong(walletBId)))
+                .andExpect(jsonPath("$.data.toBalance").value(40))
+                .andExpect(jsonPath("$.data.timestamp").isNotEmpty());
 
-        mockMvc.perform(get("/wallets/" + walletAId)).andExpect(jsonPath("$.balance").value(60));
-        mockMvc.perform(get("/wallets/" + walletBId)).andExpect(jsonPath("$.balance").value(40));
+        mockMvc.perform(get("/wallets/" + walletAId)).andExpect(jsonPath("$.data.balance").value(60));
+        mockMvc.perform(get("/wallets/" + walletBId)).andExpect(jsonPath("$.data.balance").value(40));
 
         // Test idempotency for transfers
         mockMvc.perform(post("/transactions/transfer").contentType(MediaType.APPLICATION_JSON).content(transferBody))
                 .andExpect(status().isOk()); // Should return cached response, no error
 
         // Balances should remain the same (no double transfer)
-        mockMvc.perform(get("/wallets/" + walletAId)).andExpect(jsonPath("$.balance").value(60));
-        mockMvc.perform(get("/wallets/" + walletBId)).andExpect(jsonPath("$.balance").value(40));
+        mockMvc.perform(get("/wallets/" + walletAId)).andExpect(jsonPath("$.data.balance").value(60));
+        mockMvc.perform(get("/wallets/" + walletBId)).andExpect(jsonPath("$.data.balance").value(40));
     }
 }

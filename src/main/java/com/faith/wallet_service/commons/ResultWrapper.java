@@ -1,8 +1,11 @@
 package com.faith.wallet_service.commons;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 /**
  * API response wrapper: status (SUCCESS/FAILED), message, data.
  */
+@JsonPropertyOrder({"status", "message", "data"})
 public class ResultWrapper<T> {
 
     private ResultStatus status;
