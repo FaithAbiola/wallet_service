@@ -2,9 +2,9 @@
 
 A production-ready REST API for wallet and transaction operations built with Spring Boot. This project implements a comprehensive wallet service that handles money transfers, balance management, and transaction processing with enterprise-grade features.
 
-## Requirements
+## Assessment Requirements Met ✅
 
-This implementation fully satisfies the requirements:
+This implementation fully satisfies the original coding assessment requirements:
 
 - ✅ **Create Wallet**: `POST /wallets` with initial balance
 - ✅ **Credit/Debit Operations**: `POST /transactions` with idempotency
@@ -70,28 +70,13 @@ CREATE DATABASE wallet_service;
 API: `http://localhost:8080`
 
 ### API Documentation
-
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **API Docs**: http://localhost:8080/api-docs
 
 ### Database Management
-
 - **PostgreSQL**: Connect to `localhost:5432/wallet_service` in pgAdmin
 - **H2 Console** (when using test profile): http://localhost:8080/h2-console
 - Tables are auto-created on startup
-
-## Hosted Version (For External Testers)
-
-If you don’t want to run the project locally, you can test the live deployment here:
-
-**Base URL:**  
-https://walletservice-production-56f5.up.railway.app
-
-**Swagger UI (Live):**  
- https://walletservice-production-56f5.up.railway.app/swagger-ui.html
-
-**OpenAPI JSON (Live):**  
-https://walletservice-production-56f5.up.railway.app/v3/api-docs
 
 ## API Overview
 
@@ -137,12 +122,13 @@ curl -s -X POST http://localhost:8080/transactions/transfer -H "Content-Type: ap
 ## Testing with Postman
 
 1. Start the application: `./mvnw spring-boot:run`
-2. Open the **OpenAPI JSON** in your browser: http://localhost:8080/v3/api-docs
-3. Press **Command/Ctrl + S** to save it as a `.json` file
-4. In Postman: **Import** → **Upload Files** → select the downloaded JSON file
+2. Open **Swagger UI**: http://localhost:8080/swagger-ui.html
+3. Click **"Export"** → **"Download OpenAPI spec"** (JSON/YAML)
+4. In Postman: **Import** → **Upload Files** → select the downloaded spec
 5. Test all endpoints directly in Postman
 6. Export individual requests as cURL commands: **Right-click request** → **Copy** → **Copy as cURL**
 
+Run `./scripts/curl-examples.sh` (app must be running).
 
 ## Tests
 
@@ -174,7 +160,7 @@ brew services list | grep postgresql
 # Start PostgreSQL if needed
 brew services start postgresql
 
-# Reset database
+# Reset database (nuclear option)
 brew services stop postgresql
 brew services start postgresql
 ./setup-postgres.sh
@@ -183,6 +169,12 @@ brew services start postgresql
 ### Use H2 for Testing (No PostgreSQL Required)
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=test
+```
+
+### Port Already in Use
+```bash
+# Kill process using port 8080
+lsof -ti:8080 | xargs kill -9
 ```
 
 ### API Returns 500 Errors
@@ -195,6 +187,8 @@ brew services start postgresql
 # Clean and rerun tests
 ./mvnw clean test
 
+# Run with more verbose output
+./mvnw test -DforkCount=1 -DreuseForks=false
 ```
 
 ## Project Layout
@@ -203,7 +197,7 @@ brew services start postgresql
 src/main/java/com/faith/wallet_service/
 ├── WalletServiceApplication.java
 ├── commons/                     # ResultWrapper (shared utilities)
-├── config/                      # OpenApiConfig (Swagger configuration)
+├── config/                      # WebConfig (CORS configuration)
 ├── controller/                  # WalletController, TransactionController
 ├── dto/                         # CreateWalletRequest, TransactionRequest, TransferRequest, Responses
 ├── entity/                      # Wallet, WalletTransaction, TransferTransaction, Idempotency responses
