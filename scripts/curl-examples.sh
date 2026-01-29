@@ -57,3 +57,4 @@ echo "Expected: Wallet A = 1600 (1000 + 500 credit + 300 transfer - 200 debit)"
 echo "Expected: Wallet B = 200 (500 - 300 transfer)"
 echo "Wallet A: $(curl -s "$BASE_URL/wallets/$A_ID")"
 echo "Wallet B: $(curl -s "$BASE_URL/wallets/$B_ID")"
+
