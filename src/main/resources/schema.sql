@@ -59,4 +59,3 @@ CREATE TABLE IF NOT EXISTS transfer_idempotency_responses (
     timestamp        TIMESTAMP    NOT NULL,
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
